@@ -1,4 +1,4 @@
-package com.chivickshazard.atmmachine;
+package com.chivickshazard.atmmachine.account;
 
 public class Account {
     private int id;
@@ -14,6 +14,14 @@ public class Account {
         this.accountNumber = accountNumber;
         this.accountType = accountType;
     }
+    
+    public Account(String accountName, int accountNumber, String accountType) {
+        this.accountName = accountName;
+        this.accountNumber = accountNumber;
+        this.accountType = accountType;
+    }
+
+    public Account() {}
     
     public int getId() {
         return id;
