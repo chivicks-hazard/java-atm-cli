@@ -1,23 +1,15 @@
 package com.chivickshazard.atmmachine.account;
 
+import com.chivickshazard.atmmachine.customer.Customer;
+
 public class Account {
     private int id;
-    private String accountName;
-    private int accountNumber;
-    private String balance;
-    private String pin;
+    private double balance;
     private String accountType;
 
-    public Account(int id, String accountName, int accountNumber, String accountType) {
+    public Account(int id, double balance, String accountType) {
         this.id = id;
-        this.accountName = accountName;
-        this.accountNumber = accountNumber;
-        this.accountType = accountType;
-    }
-    
-    public Account(String accountName, int accountNumber, String accountType) {
-        this.accountName = accountName;
-        this.accountNumber = accountNumber;
+        this.balance = balance;
         this.accountType = accountType;
     }
 
@@ -29,19 +21,7 @@ public class Account {
     public void setId(int id) {
         this.id = id;
     }
-    public String getAccountName() {
-        return accountName;
-    }
     
-    public void setAccountName(String accountName) {
-        this.accountName = accountName;
-    }
-    public int getAccountNumber() {
-        return accountNumber;
-    }
-    public void setAccountNumber(int accountNumber) {
-        this.accountNumber = accountNumber;
-    }
     public String getAccountType() {
         return accountType;
     }
@@ -49,26 +29,18 @@ public class Account {
         this.accountType = accountType;
     }
 
-    public String getBalance() {
+    public double getBalance() {
         return balance;
     }
 
-    public void setBalance(String balance) {
+    public void setBalance(double balance) {
         this.balance = balance;
     }
-
-    public String getPin() {
-        return pin;
-    }
-
-    public void setPin(String pin) {
-        this.pin = pin;
-    }
-    
-    @Override
-    public String toString() {
-        return "Account Name: " + getAccountName() + "\n" +
-        "Account Number: " + getAccountNumber() + "\n" +
-        "Account Type: " + getAccountType();
+    public String stringifyAccount(Customer customer) {
+        return "Customer Name: " + customer.getFirstName() + " " + customer.getLastName() + "\n" +
+        "Customer Phone Number: " + customer.getPhone() + "\n" +
+        "Customer Email: " + customer.getEmail() + "\n" +
+        "Account Type: " + accountType + "\n" +
+        "Account Balance: " + balance;
     }
 }
