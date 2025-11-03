@@ -5,7 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-import com.chivickshazard.atmmachine.utils.DbHelper;
+import com.chivickshazard.atmmachine.utils.DBHelper;
 
 public class CustomerDAD {
     public static void createCustomer(String firstName, String lastName, String phone, String email, String pin) {
@@ -13,7 +13,7 @@ public class CustomerDAD {
 
         try {
             Customer customer = new Customer();
-            Connection conn = DbHelper.getConnection();
+            Connection conn = DBHelper.getConnection();
             PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 
             stmt.setString(1, firstName);
@@ -49,7 +49,7 @@ public class CustomerDAD {
         String query = "INSERT INTO customers (firstName, lastName, phone, email, pin) VALUES (?, ?, ?, ?, ?)";
 
         try {
-            Connection conn = DbHelper.getConnection();
+            Connection conn = DBHelper.getConnection();
             PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 
             stmt.setString(1, newCustomer.getFirstName());

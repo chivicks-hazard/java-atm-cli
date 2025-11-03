@@ -7,10 +7,11 @@ import java.util.Scanner;
 
 import com.chivickshazard.atmmachine.account.Account;
 import com.chivickshazard.atmmachine.account.AccountDAO;
+import com.chivickshazard.atmmachine.account.AccountService;
 import com.chivickshazard.atmmachine.account.AccountType;
 import com.chivickshazard.atmmachine.customer.Customer;
 import com.chivickshazard.atmmachine.customer.CustomerDAD;
-import com.chivickshazard.atmmachine.utils.DbHelper;
+import com.chivickshazard.atmmachine.utils.DBHelper;
 
 public class Main {
     public static void main(String[] args) {
@@ -41,7 +42,7 @@ public class Main {
                         scanner.nextLine();
                         String query = "SELECT * FROM customers WHERE pin = ?";
 
-                        try (Connection conn = DbHelper.getConnection()) {
+                        try (Connection conn = DBHelper.getConnection()) {
                             PreparedStatement stmt = conn.prepareStatement(query);
 
                             stmt.setInt(1, pin);
@@ -53,6 +54,12 @@ public class Main {
                                 query = "UPDATE customers SET pin = ? WHERE pin = ?";
                                 System.out.println();
                                 System.out.println("You have successfully logged in!\n");
+
+                                // Account Preview
+                                System.out.println("Account Preview: ");
+                                System.out.println(customer.toString());
+
+                                System.out.println();
                                 System.out.println("Select an account to withdraw from: ");
                                 System.out.println("1. Savings Account");
                                 System.out.println("2. Current Account");
@@ -61,11 +68,18 @@ public class Main {
                                 if (command.equals("1")) {
                                     query = "SELECT * FROM accounts WHERE customerId = ? AND accountType = ?";
                                     stmt = conn.prepareStatement(query);
-                                    stmt.setInt(1, rs.getInt("id"));
+                                    stmt.setInt(1, customer.getCustomerId());
                                     stmt.setString(2, AccountType.SAVINGS.toString());
                                     rs = stmt.executeQuery();
 
                                     if (rs.next()) {
+                                        Account account = new Account(rs.getDouble("balance"),  rs.getString("accountType"), customer);
+                                        System.out.println();
+
+                                        // Account Preview
+                                        System.out.println("Account Preview: ");
+                                        System.out.println(account.stringifyAccount());
+
                                         System.out.println();
                                         System.out.println("Select the amount you want to withdraw: ");
                                         System.out.println("1. $5000");
@@ -73,19 +87,67 @@ public class Main {
                                         System.out.println("3. $20000");
                                         System.out.println("4. Enter a custom amount");
                                         System.out.print("Pick one: ");
-                                        amount = scanner.nextInt();
-                                        scanner.nextLine();
+                                        command = scanner.nextLine();
 
-                                        if (command.equals("1")) {
-                                            amount = 10000.00;
-                                            System.out.println("Are you sure you want to withdraw $" + amount + "?");
-                                            System.out.println("Yes");
-                                            System.out.println("No");
-                                            System.out.print("Select an option: ");
-                                            command = scanner.nextLine(); 
+                                        switch (command) {
+                                            case "1":
+                                                amount = 5000.00;
+                                                System.out.println("Are you sure you want to withdraw $" + amount + "?");
+                                                System.out.println("Yes");
+                                                System.out.println("No");
+                                                System.out.print("Select an option: ");
+                                                command = scanner.nextLine();
+
+                                                if (command.equalsIgnoreCase("yes")) {
+                                                    AccountService.withdrawCash(account, amount);
+                                                }
+                                                break;
+                                        
+                                            case "2":
+                                                amount = 10000.00;
+                                                System.out.println("Are you sure you want to withdraw $" + amount + "?");
+                                                System.out.println("Yes");
+                                                System.out.println("No");
+                                                System.out.print("Select an option: ");
+                                                command = scanner.nextLine();
+
+                                                if (command.equalsIgnoreCase("yes")) {
+                                                    AccountService.withdrawCash(account, amount);
+                                                }
+                                                break;
+
+                                            case "3":
+                                                amount = 20000.00;
+                                                System.out.println("Are you sure you want to withdraw $" + amount + "?");
+                                                System.out.println("Yes");
+                                                System.out.println("No");
+                                                System.out.print("Select an option: ");
+                                                command = scanner.nextLine();
+
+                                                if (command.equalsIgnoreCase("yes")) {
+                                                    AccountService.withdrawCash(account, amount);
+                                                }
+                                                break;
+
+                                            case "4":
+                                                System.out.print("Enter the amount you want to withdraw: ");
+                                                amount = scanner.nextDouble();
+                                                scanner.nextLine();
+                                                System.out.println("Are you sure you want to withdraw $" + amount + "?");
+                                                System.out.println("Yes");
+                                                System.out.println("No");
+                                                System.out.print("Select an option: ");
+                                                command = scanner.nextLine();
+
+                                                if (command.equalsIgnoreCase("yes")) {
+                                                    AccountService.withdrawCash(account, amount);
+                                                }
+                                                break;
+
+                                            default:
+                                                break;
                                         }
-                                    } else {
-                                        // Customer customer = new Customer(rs.getInt("id"), rs.getString("firstName"), rs.getString("lastName"), rs.getString("phone"), rs.getString("email"), rs.getString("pin"));
+                                    } else {// Create New Bank Account if account does not exist
                                         System.out.println();
                                         System.out.println("You don't have a bank account.\nDo you want to open a bank account?");
                                         System.out.println("Yes");
@@ -93,6 +155,7 @@ public class Main {
                                         System.out.print("Select an option: ");
                                         command = scanner.nextLine();
 
+                                        // Create New Bank Account
                                         if (command.equalsIgnoreCase("Yes")) {
                                             System.out.println();
                                             System.out.println("CREATE NEW ACCOUNT");
@@ -125,7 +188,7 @@ public class Main {
                                         }
                                     }
                                 }
-                            } else {
+                            } else { // Create New Customer Account if account does not exist
                                 System.out.println();
                                 System.out.println("You don't have an account.\nDo you want to open an account?");
                                 System.out.println("Yes");
@@ -163,6 +226,8 @@ public class Main {
                                     CustomerDAD.createCustomer(newCustomer);
                                 }
                             }
+
+                            DBHelper.close(conn);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

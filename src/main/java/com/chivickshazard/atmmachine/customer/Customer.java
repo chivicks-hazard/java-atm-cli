@@ -51,6 +51,10 @@ public class Customer {
         this.lastName = lastName;
     }
 
+    public String getName() {
+        return firstName + " " + lastName;
+    }
+
     public String getPhone() {
         return phone;
     }
