@@ -32,26 +32,30 @@ public class Main {
             command = scanner.nextLine();
 
             while (!command.equalsIgnoreCase("No")) {
+                double amount;
+                String pin;
+                String query;
+                PreparedStatement stmt;
+                Customer customer;
+                Account account;
+                
                 switch (command) {
                     case "1": // Withdraw Cash
-                        double amount;
                         System.out.println();
                         System.err.println("WITHDRAW CASH");
                         System.out.print("Enter your PIN: ");
-                        int pin = scanner.nextInt();
-                        scanner.nextLine();
-                        String query = "SELECT * FROM customers WHERE pin = ?";
+                        pin = scanner.nextLine();
+                        query = "SELECT * FROM customers WHERE pin = ?";
 
                         try (Connection conn = DBHelper.getConnection()) {
-                            PreparedStatement stmt = conn.prepareStatement(query);
+                            stmt = conn.prepareStatement(query);
 
-                            stmt.setInt(1, pin);
+                            stmt.setString(1, pin);
 
                             ResultSet rs = stmt.executeQuery();
 
                             if(rs.next()) {
-                                Customer customer = new Customer(rs.getInt("id"), rs.getString("firstName"), rs.getString("lastName"), rs.getString("phone"), rs.getString("email"), rs.getString("pin"));
-                                query = "UPDATE customers SET pin = ? WHERE pin = ?";
+                                customer = new Customer(rs.getInt("id"), rs.getString("firstName"), rs.getString("lastName"), rs.getString("phone"), rs.getString("email"), rs.getString("pin"));
                                 System.out.println();
                                 System.out.println("You have successfully logged in!\n");
 
@@ -65,6 +69,7 @@ public class Main {
                                 System.out.println("2. Current Account");
                                 System.out.print("Pick one: ");
                                 command = scanner.nextLine();
+
                                 if (command.equals("1")) {
                                     query = "SELECT * FROM accounts WHERE customerId = ? AND accountType = ?";
                                     stmt = conn.prepareStatement(query);
@@ -73,7 +78,7 @@ public class Main {
                                     rs = stmt.executeQuery();
 
                                     if (rs.next()) {
-                                        Account account = new Account(rs.getDouble("balance"),  rs.getString("accountType"), customer);
+                                        account = new Account(rs.getDouble("balance"),  rs.getString("accountType"), customer);
                                         System.out.println();
 
                                         // Account Preview
@@ -232,6 +237,112 @@ public class Main {
                             e.printStackTrace();
                         }
 
+                        break;
+
+                    case "2": // Transfer Cash
+                        System.out.println();
+                        System.out.println("TRANSFER CASH");
+                        System.out.print("Enter your PIN: ");
+                        pin = scanner.nextLine();
+                        query = "SELECT * FROM customers WHERE pin = ?";
+
+                        try (Connection conn = DBHelper.getConnection()) {
+                            stmt = conn.prepareStatement(query);
+
+                            stmt.setString(1, pin);
+
+                            ResultSet rs = stmt.executeQuery();
+
+                            if(rs.next()) {
+                                customer = new Customer(rs.getInt("id"), rs.getString("firstName"), rs.getString("lastName"), rs.getString("phone"), rs.getString("email"), rs.getString("pin"));
+                                System.out.println();
+                                System.out.println("You have successfully logged in!\n");
+
+                                // Account Preview
+                                System.out.println("Account Preview: ");
+                                System.out.println(customer.toString());
+
+                                System.out.println();
+                                System.out.println("Select an account to withdraw from: ");
+                                System.out.println("1. Savings Account");
+                                System.out.println("2. Current Account");
+                                System.out.print("Pick one: ");
+                                command = scanner.nextLine();
+
+                                if (command.equals("1")) {
+                                    query = "SELECT * FROM accounts WHERE customerId = ? AND accountType = ?";
+                                    stmt = conn.prepareStatement(query);
+                                    stmt.setInt(1, customer.getCustomerId());
+                                    stmt.setString(2, AccountType.SAVINGS.toString());
+                                    rs = stmt.executeQuery();
+
+                                    if (rs.next()) {
+                                        String recipientPhoneNumber;
+                                        Customer recipient;
+                                        account = new Account(rs.getDouble("balance"),  rs.getString("accountType"), customer);
+                                        System.out.println();
+
+                                        // Account Preview
+                                        System.out.println("Account Preview: ");
+                                        System.out.println(account.stringifyAccount());
+
+                                        System.out.print("\nEnter the phone number of the recipient: ");
+                                        recipientPhoneNumber = scanner.nextLine();
+                                        query = "SELECT * FROM customers WHERE phone = ?";
+                                        stmt = conn.prepareStatement(query);
+                                        stmt.setString(1, recipientPhoneNumber);
+
+                                        rs = stmt.executeQuery();
+
+                                        if (rs.next()) {
+                                            recipient = new Customer(rs.getInt("id"), rs.getString("firstName"), rs.getString("lastName"), rs.getString("phone"), rs.getString("email"), rs.getString("pin"));
+                                            query = "SELECT * FROM accounts WHERE customerId = ?";
+
+                                            stmt = conn.prepareStatement(query);
+                                            stmt.setInt(1, recipient.getCustomerId());
+
+                                            rs = stmt.executeQuery();
+                                            
+                                            if (rs.next()) {
+                                                System.out.println();
+
+                                                Account recipientAccount = new Account(rs.getDouble("balance"),  rs.getString("accountType"), recipient);
+
+                                                // Preview Recipient Account
+                                                System.out.println("Account Preview: ");
+                                                System.out.println(recipient.toString());
+
+                                                System.out.print("\nEnter the amount you want to transfer: ");
+                                                amount = scanner.nextDouble();
+                                                scanner.nextLine();
+
+                                                System.out.println("Are you sure you want to transfer $" + amount + " to \n" + recipient.toString() + "?");
+                                                System.out.println("Yes");
+                                                System.out.println("No");
+                                                System.out.print("Select an option: ");
+                                                command = scanner.nextLine();
+                                                scanner.nextLine();
+
+                                                if (command.equalsIgnoreCase("yes")) {
+                                                    // AccountService.transferCash(account, recipientAccount, amount);
+                                                    AccountService.debitAccount(account, amount);
+                                                    AccountService.creditAccount(recipientAccount, amount);
+                                                }
+                                            } else {
+                                                System.out.println("This account does not exist.");
+                                            }
+                                        } else {
+                                            System.out.println("This account does not exist.");
+                                        }
+
+                                    }
+                                }
+                            }
+
+                            DBHelper.close(conn);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                         break;
 
                     default:
