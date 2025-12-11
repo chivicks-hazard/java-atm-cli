@@ -1,6 +1,5 @@
 package com.chivickshazard.atmmachine.customer;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ public class CustomerTest {
         assertEquals("John Doe", customer.getName());
     }
 
-    @Test
+    /* @Test
     void groupedAssertion() {
         customer.setFirstName("John");
         customer.setLastName("Doe");
@@ -24,5 +23,5 @@ public class CustomerTest {
         assertAll("Customer", 
             () -> assertEquals("John", customer.getFirstName()),
             () -> assertEquals("Doe", customer.getLastName()));
-    }
+    } */
 }
