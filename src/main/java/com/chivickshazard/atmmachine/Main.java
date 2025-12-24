@@ -23,7 +23,7 @@ public class Main {
             System.out.println("Select an service");
             System.out.println("1. Withdraw Cash");
             System.out.println("2. Transfer Cash");
-            System.out.println("3. Recharge Airtime/Cash");
+            System.out.println("3. Recharge Airtime/Data");
             System.out.println("4. Pay Bills");
             System.out.println("5. Print All Accounts");
             // System.out.println("6. Create Account");
@@ -343,6 +343,70 @@ public class Main {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                        break;
+
+                    case "3": // Recharge Airtime/Data
+                        System.out.println();
+                        System.err.println("Recharge Airtime/Data");
+                        System.out.print("Enter your PIN: ");
+                        pin = scanner.nextLine();
+                        query = "SELECT * FROM customers WHERE pin = ?";
+
+                        try (Connection conn = DBHelper.getConnection()) {
+                            stmt = conn.prepareStatement(query);
+
+                            stmt.setString(1, pin);
+
+                            ResultSet rs = stmt.executeQuery();
+
+                            if(rs.next()) {
+                                customer = new Customer(rs.getInt("id"), rs.getString("firstName"), rs.getString("lastName"), rs.getString("phone"), rs.getString("email"), rs.getString("pin"));
+                                System.out.println();
+                                System.out.println("You have successfully logged in!\n");
+
+                                // Account Preview
+                                System.out.println("Account Preview: ");
+                                System.out.println(customer.toString());
+
+                                System.out.println();
+                                System.out.println("Select an account to recharge from: ");
+                                System.out.println("1. Savings Account");
+                                System.out.println("2. Current Account");
+                                System.out.print("Pick one: ");
+                                command = scanner.nextLine();
+
+                                if (command.equals("1")) {
+                                    query = "SELECT * FROM accounts WHERE customerId = ? AND accountType = ?";
+                                    stmt = conn.prepareStatement(query);
+                                    stmt.setInt(1, customer.getCustomerId());
+                                    stmt.setString(2, AccountType.SAVINGS.toString());
+                                    rs = stmt.executeQuery();
+
+                                    if (rs.next()) {
+                                        account = new Account(rs.getDouble("balance"),  rs.getString("accountType"), customer);
+                                        System.out.println();
+
+                                        // Account Preview
+                                        System.out.println("Account Preview: ");
+                                        System.out.println(account.stringifyAccount());
+
+                                        System.out.println("Do you want to recharge airtime or data?");
+                                        System.out.println();
+                                        System.out.println("1. AIRTIME");
+                                        System.out.println("2. DATA");
+                                        System.out.print("Select your choice: ");
+                                        command = scanner.nextLine();
+
+                                        if (command.equals("1")) {
+                                            AccountService.rechargeAirtime(account);
+                                        } else if (command.equals("2")) {
+                                            AccountService.rechargeData(account);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                            
                         break;
 
                     default:

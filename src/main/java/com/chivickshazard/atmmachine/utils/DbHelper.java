@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBHelper {
-    private static final String url = "jdbc:postgresql://localhost:5432/bank";
-    private static final String userName = "";
-    private static final String password = "";
+    private static final String url = "jdbc:mysql://localhost:3306/bank";
+    private static final String userName = "root";
+    private static final String password = "sqlchivicks";
     
     public static Connection getConnection() throws SQLException{
         Connection conn = DriverManager.getConnection(url, userName, password);

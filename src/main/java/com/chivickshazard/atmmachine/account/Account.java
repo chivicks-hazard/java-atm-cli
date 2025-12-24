@@ -44,6 +44,14 @@ public class Account {
     public void setBalance(double balance) {
         this.balance = balance;
     }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
     
     public String stringifyAccount(Customer customer) {
         return "Customer Name: " + customer.getFirstName() + " " + customer.getLastName() + "\n" +
