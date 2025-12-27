@@ -11,7 +11,7 @@ import com.chivickshazard.atmmachine.account.AccountService;
 import com.chivickshazard.atmmachine.account.AccountType;
 import com.chivickshazard.atmmachine.customer.Customer;
 import com.chivickshazard.atmmachine.customer.CustomerDAD;
-import com.chivickshazard.atmmachine.utils.DBHelper;
+import com.chivickshazard.atmmachine.utils.DbHelper;
 
 public class Main {
     public static void main(String[] args) {
@@ -42,12 +42,12 @@ public class Main {
                 switch (command) {
                     case "1": // Withdraw Cash
                         System.out.println();
-                        System.err.println("WITHDRAW CASH");
+                        System.out.println("WITHDRAW CASH");
                         System.out.print("Enter your PIN: ");
                         pin = scanner.nextLine();
                         query = "SELECT * FROM customers WHERE pin = ?";
 
-                        try (Connection conn = DBHelper.getConnection()) {
+                        try (Connection conn = DbHelper.getConnection()) {
                             stmt = conn.prepareStatement(query);
 
                             stmt.setString(1, pin);
@@ -232,8 +232,9 @@ public class Main {
                                 }
                             }
 
-                            DBHelper.close(conn);
                         } catch (Exception e) {
+                            // Log error and continue - connection is automatically closed by try-with-resources
+                            System.err.println("Error during withdrawal: " + e.getMessage());
                             e.printStackTrace();
                         }
 
@@ -246,7 +247,7 @@ public class Main {
                         pin = scanner.nextLine();
                         query = "SELECT * FROM customers WHERE pin = ?";
 
-                        try (Connection conn = DBHelper.getConnection()) {
+                        try (Connection conn = DbHelper.getConnection()) {
                             stmt = conn.prepareStatement(query);
 
                             stmt.setString(1, pin);
@@ -321,7 +322,6 @@ public class Main {
                                                 System.out.println("No");
                                                 System.out.print("Select an option: ");
                                                 command = scanner.nextLine();
-                                                scanner.nextLine();
 
                                                 if (command.equalsIgnoreCase("yes")) {
                                                     // AccountService.transferCash(account, recipientAccount, amount);
@@ -339,20 +339,21 @@ public class Main {
                                 }
                             }
 
-                            DBHelper.close(conn);
                         } catch (Exception e) {
+                            // Log error and continue - connection is automatically closed by try-with-resources
+                            System.err.println("Error during transfer: " + e.getMessage());
                             e.printStackTrace();
                         }
                         break;
 
                     case "3": // Recharge Airtime/Data
                         System.out.println();
-                        System.err.println("Recharge Airtime/Data");
+                        System.out.println("RECHARGE AIRTIME/DATA");
                         System.out.print("Enter your PIN: ");
                         pin = scanner.nextLine();
                         query = "SELECT * FROM customers WHERE pin = ?";
 
-                        try (Connection conn = DBHelper.getConnection()) {
+                        try (Connection conn = DbHelper.getConnection()) {
                             stmt = conn.prepareStatement(query);
 
                             stmt.setString(1, pin);
@@ -405,12 +406,16 @@ public class Main {
                                     }
                                 }
                             }
+                        } catch (Exception e) {
+                            // Log error and continue - connection is automatically closed by try-with-resources
+                            System.err.println("Error during recharge: " + e.getMessage());
+                            e.printStackTrace();
                         }
                             
                         break;
 
                     default:
-                        System.out.println("Omo ");
+                        System.out.println("Invalid option selected. Please choose a valid service.");
                         break;                                       
                 }
 
@@ -423,7 +428,7 @@ public class Main {
                     System.out.println("Select an service");
                     System.out.println("1. Withdraw Cash");
                     System.out.println("2. Transfer Cash");
-                    System.out.println("3. Recharge Airtime/Cash");
+                    System.out.println("3. Recharge Airtime/Data");
                     System.out.println("4. Pay Bills");
                     System.out.println("5. Print All Accounts");
                     System.out.print("Pick one: ");

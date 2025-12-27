@@ -2,6 +2,10 @@ package com.chivickshazard.atmmachine.account;
 
 import com.chivickshazard.atmmachine.customer.Customer;
 
+/**
+ * Represents a bank account with balance, type, and customer information.
+ * Solution: Added null checks to prevent NullPointerException and balance validation.
+ */
 public class Account {
     private int id;
     private double balance;
@@ -41,7 +45,16 @@ public class Account {
         return balance;
     }
 
+    /**
+     * Sets the account balance.
+     * Solution: Added validation to prevent negative balances.
+     * @param balance The balance to set (must be non-negative)
+     */
     public void setBalance(double balance) {
+        // Solution: Validate balance to prevent negative values
+        if (balance < 0) {
+            throw new IllegalArgumentException("Account balance cannot be negative");
+        }
         this.balance = balance;
     }
 
@@ -61,11 +74,22 @@ public class Account {
         "Account Balance: " + balance;
     }
     
+    /**
+     * Returns a string representation of the account.
+     * Includes null check to prevent NullPointerException if customer is not set.
+     * @return String representation of the account
+     */
     public String stringifyAccount() {
+        // Solution: Added null check to prevent NullPointerException
+        if (customer == null) {
+            return "Account Type: " + accountType + "\n" +
+                   "Account Balance: " + balance + "\n" +
+                   "Customer: Not assigned";
+        }
         return "Customer Name: " + customer.getFirstName() + " " + customer.getLastName() + "\n" +
-        "Customer Phone Number: " + customer.getPhone() + "\n" +
-        "Customer Email: " + customer.getEmail() + "\n" +
-        "Account Type: " + accountType + "\n" +
-        "Account Balance: " + balance;
+               "Customer Phone Number: " + customer.getPhone() + "\n" +
+               "Customer Email: " + customer.getEmail() + "\n" +
+               "Account Type: " + accountType + "\n" +
+               "Account Balance: " + balance;
     }
 }
