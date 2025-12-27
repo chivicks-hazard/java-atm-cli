@@ -89,6 +89,53 @@ public class AccountService {
         }
     }
 
+    /**
+     * Transfers money from one account to another using a single database transaction.
+     * Solution: This method uses AccountDAO.makeTransfer() which performs both operations
+     * in a single transaction, preventing deadlocks and ensuring atomicity.
+     * 
+     * @param senderAccount The account to transfer from
+     * @param recipientAccount The account to transfer to
+     * @param amount The amount to transfer
+     */
+    public static void transferCash(Account senderAccount, Account recipientAccount, double amount) {
+        // Solution: Validate sender has sufficient balance before attempting transfer
+        if (senderAccount.getBalance() < amount) {
+            System.out.println("Insufficient funds. Cannot complete transfer.");
+            return;
+        }
+
+        // Solution: Calculate new balances
+        double newSenderBalance = senderAccount.getBalance() - amount;
+        double newRecipientBalance = recipientAccount.getBalance() + amount;
+
+        // Solution: Use makeTransfer() which performs both updates in a single transaction
+        // This prevents deadlocks that occur when using separate connections
+        boolean isTransactionSuccessful = AccountDAO.makeTransfer(
+            senderAccount.getId(),
+            recipientAccount.getId(),
+            senderAccount.getAccountType(),
+            recipientAccount.getAccountType(),
+            newSenderBalance,
+            newRecipientBalance
+        );
+
+        if (isTransactionSuccessful) {
+            // Solution: Update account objects only after successful database transaction
+            senderAccount.setBalance(newSenderBalance);
+            recipientAccount.setBalance(newRecipientBalance);
+            
+            System.out.println("\nTransfer Successful!");
+            System.out.println("Amount transferred: $" + amount);
+            System.out.println("\nSender Account:");
+            System.out.println(senderAccount.stringifyAccount());
+            System.out.println("\nRecipient Account:");
+            System.out.println(recipientAccount.stringifyAccount());
+        } else {
+            System.out.println("Transfer Failed! Please try again.");
+        }
+    }
+
     public static void rechargeAirtime(Account account) {
         int amount;
 

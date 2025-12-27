@@ -324,9 +324,11 @@ public class Main {
                                                 command = scanner.nextLine();
 
                                                 if (command.equalsIgnoreCase("yes")) {
-                                                    // AccountService.transferCash(account, recipientAccount, amount);
-                                                    AccountService.debitAccount(account, amount);
-                                                    AccountService.creditAccount(recipientAccount, amount);
+                                                    // Solution: Use transferCash() which performs both operations in a single transaction
+                                                    // This prevents deadlocks that occur when using separate database connections
+                                                    // The previous approach (debitAccount + creditAccount) opened two separate connections
+                                                    // which could cause the database to hang waiting for locks to be released
+                                                    AccountService.transferCash(account, recipientAccount, amount);
                                                 }
                                             } else {
                                                 System.out.println("This account does not exist.");

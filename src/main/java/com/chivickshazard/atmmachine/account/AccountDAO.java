@@ -97,9 +97,14 @@ public class AccountDAO {
         String receiverQuery = "UPDATE accounts SET balance = ? WHERE customerId = ? AND accountType = ?";
         boolean isTransactionSuccessful = false;
 
-        // Solution: Fixed try-with-resources syntax - connection is properly managed
-        try (Connection conn = DbHelper.getConnection()) {
+        // Solution: Fixed - Manual connection management to ensure proper rollback on exceptions
+        // Using try-with-resources can cause issues because connection closes before rollback
+        // Solution: Using a single connection for both updates prevents deadlocks
+        Connection conn = null;
+        try {
+            conn = DbHelper.getConnection();
             // Solution: Disable auto-commit to enable transaction control
+            // This ensures both updates happen atomically (all or nothing)
             conn.setAutoCommit(false);
 
             // For the sender account
@@ -136,15 +141,39 @@ public class AccountDAO {
             isTransactionSuccessful = true;
         
         } catch (SQLException e) {
-            // Solution: Improved error handling - connection is automatically closed by try-with-resources
+            // Solution: CRITICAL FIX - Explicitly rollback on exception to prevent hanging/deadlocks
+            // If we don't rollback, the transaction remains open and can cause the database to hang
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    System.err.println("Error during rollback: " + rollbackEx.getMessage());
+                }
+            }
             System.err.println("Error during transfer transaction: " + e.getMessage());
             e.printStackTrace();
             isTransactionSuccessful = false;
         } catch (Exception e) {
-            // Solution: Catch any other exceptions
+            // Solution: CRITICAL FIX - Explicitly rollback on exception to prevent hanging/deadlocks
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    System.err.println("Error during rollback: " + rollbackEx.getMessage());
+                }
+            }
             System.err.println("Unexpected error during transfer: " + e.getMessage());
             e.printStackTrace();
             isTransactionSuccessful = false;
+        } finally {
+            // Solution: Ensure connection is always closed, even if rollback fails
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException closeEx) {
+                    System.err.println("Error closing connection: " + closeEx.getMessage());
+                }
+            }
         }
 
         return isTransactionSuccessful;
