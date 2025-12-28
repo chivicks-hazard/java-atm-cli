@@ -2,13 +2,25 @@ package com.chivickshazard.atmmachine.account;
 
 import java.util.Scanner;
 
+/**
+ * Service class for account-related operations.
+ * Handles business logic for withdrawals, deposits, transfers, and recharges.
+ * Solution: Fixed multiple issues including balance checks, error messages, and code duplication.
+ */
 public class AccountService {
     private static Scanner scanner = new Scanner(System.in);
     private static String command = "";
 
-    // Withdraw Cash
+    /**
+     * Withdraws cash from an account.
+     * Solution: Fixed balance check to use >= instead of > to allow exact balance withdrawals.
+     * 
+     * @param account The account to withdraw from
+     * @param amount The amount to withdraw
+     */
     public static void withdrawCash(Account account, double amount) {
-        if (account.getBalance() > amount) {
+        // Solution: Changed > to >= to allow withdrawals when balance equals amount
+        if (account.getBalance() >= amount) {
             double newBalance = account.getBalance() - amount;
             boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
@@ -16,7 +28,8 @@ public class AccountService {
                 System.out.println("Transaction Successful!");
                 account.setBalance(newBalance);
                 System.out.println("Withdrawal successful. New balance: $" + account.getBalance());
-                account.stringifyAccount();
+                // Solution: Fixed - now actually prints the account information
+                System.out.println(account.stringifyAccount());
             } else {
                 System.out.println("Transaction Failed!");
             }
@@ -26,36 +39,101 @@ public class AccountService {
         }
     }
 
+    /**
+     * Debits (withdraws) money from an account.
+     * Solution: Fixed balance check to use >= instead of > to allow exact balance withdrawals.
+     * 
+     * @param account The account to debit from
+     * @param amount The amount to debit
+     */
     public static void debitAccount(Account account, double amount) {
-        if (account.getBalance() > amount) {
+        // Solution: Changed > to >= to allow debits when balance equals amount
+        if (account.getBalance() >= amount) {
             double newBalance = account.getBalance() - amount;
             boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
             if(isTransactionSuccessful) {
                 System.out.println("Transaction Successful!");
                 account.setBalance(newBalance);
-                System.out.println("Withdrawal successful. New balance: $" + account.getBalance());
-                account.stringifyAccount();
+                System.out.println("Debit successful. New balance: $" + account.getBalance());
+                // Solution: Fixed - now actually prints the account information
+                System.out.println(account.stringifyAccount());
             } else {
                 System.out.println("Transaction Failed!");
             }
-        }  else {
+        } else {
             System.out.println("Insufficient funds.");
         }
     }
 
+    /**
+     * Credits (deposits) money to an account.
+     * Solution: Fixed incorrect message that said "Withdrawal" instead of "Deposit/Credit".
+     * 
+     * @param account The account to credit
+     * @param amount The amount to credit
+     */
     public static void creditAccount(Account account, double amount) {
         double newBalance = account.getBalance() + amount;
-            boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
+        boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
-            if(isTransactionSuccessful) {
-                System.out.println("Transaction Successful!");
-                account.setBalance(newBalance);
-                System.out.println("Withdrawal successful. New balance: $" + account.getBalance());
-                account.stringifyAccount();
-            } else {
-                System.out.println("Transaction Failed!");
-            }
+        if(isTransactionSuccessful) {
+            System.out.println("Transaction Successful!");
+            account.setBalance(newBalance);
+            // Solution: Fixed incorrect message - changed from "Withdrawal" to "Credit"
+            System.out.println("Credit successful. New balance: $" + account.getBalance());
+            // Solution: Fixed - now actually prints the account information
+            System.out.println(account.stringifyAccount());
+        } else {
+            System.out.println("Transaction Failed!");
+        }
+    }
+
+    /**
+     * Transfers money from one account to another using a single database transaction.
+     * Solution: This method uses AccountDAO.makeTransfer() which performs both operations
+     * in a single transaction, preventing deadlocks and ensuring atomicity.
+     * 
+     * @param senderAccount The account to transfer from
+     * @param recipientAccount The account to transfer to
+     * @param amount The amount to transfer
+     */
+    public static void transferCash(Account senderAccount, Account recipientAccount, double amount) {
+        // Solution: Validate sender has sufficient balance before attempting transfer
+        if (senderAccount.getBalance() < amount) {
+            System.out.println("Insufficient funds. Cannot complete transfer.");
+            return;
+        }
+
+        // Solution: Calculate new balances
+        double newSenderBalance = senderAccount.getBalance() - amount;
+        double newRecipientBalance = recipientAccount.getBalance() + amount;
+
+        // Solution: Use makeTransfer() which performs both updates in a single transaction
+        // This prevents deadlocks that occur when using separate connections
+        boolean isTransactionSuccessful = AccountDAO.makeTransfer(
+            senderAccount.getId(),
+            recipientAccount.getId(),
+            senderAccount.getAccountType(),
+            recipientAccount.getAccountType(),
+            newSenderBalance,
+            newRecipientBalance
+        );
+
+        if (isTransactionSuccessful) {
+            // Solution: Update account objects only after successful database transaction
+            senderAccount.setBalance(newSenderBalance);
+            recipientAccount.setBalance(newRecipientBalance);
+            
+            System.out.println("\nTransfer Successful!");
+            System.out.println("Amount transferred: $" + amount);
+            System.out.println("\nSender Account:");
+            System.out.println(senderAccount.stringifyAccount());
+            System.out.println("\nRecipient Account:");
+            System.out.println(recipientAccount.stringifyAccount());
+        } else {
+            System.out.println("Transfer Failed! Please try again.");
+        }
     }
 
     public static void rechargeAirtime(Account account) {
@@ -82,7 +160,8 @@ public class AccountService {
                 command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("yes")) {
-                    if (account.getBalance() > amount) {
+                    // Solution: Changed > to >= to allow purchases when balance equals amount
+                    if (account.getBalance() >= amount) {
                         double newBalance = account.getBalance() - amount;
                         boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
@@ -90,7 +169,8 @@ public class AccountService {
                             System.out.println("Transaction Successful!");
                             account.setBalance(newBalance);
                             System.out.println("Purchase successful. New balance: $" + account.getBalance());
-                            account.stringifyAccount();
+                            // Solution: Fixed - now actually prints the account information
+                            System.out.println(account.stringifyAccount());
                         } else {
                             System.out.println("Transaction Failed!");
                         }
@@ -111,7 +191,8 @@ public class AccountService {
                 command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("yes")) {
-                    if (account.getBalance() > amount) {
+                    // Solution: Changed > to >= to allow purchases when balance equals amount
+                    if (account.getBalance() >= amount) {
                         double newBalance = account.getBalance() - amount;
                         boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
@@ -119,7 +200,8 @@ public class AccountService {
                             System.out.println("Transaction Successful!");
                             account.setBalance(newBalance);
                             System.out.println("Purchase successful. New balance: $" + account.getBalance());
-                            account.stringifyAccount();
+                            // Solution: Fixed - now actually prints the account information
+                            System.out.println(account.stringifyAccount());
                         } else {
                             System.out.println("Transaction Failed!");
                         }
@@ -140,7 +222,8 @@ public class AccountService {
                 command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("yes")) {
-                    if (account.getBalance() > amount) {
+                    // Solution: Changed > to >= to allow purchases when balance equals amount
+                    if (account.getBalance() >= amount) {
                         double newBalance = account.getBalance() - amount;
                         boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
@@ -148,7 +231,8 @@ public class AccountService {
                             System.out.println("Transaction Successful!");
                             account.setBalance(newBalance);
                             System.out.println("Purchase successful. New balance: $" + account.getBalance());
-                            account.stringifyAccount();
+                            // Solution: Fixed - now actually prints the account information
+                            System.out.println(account.stringifyAccount());
                         } else {
                             System.out.println("Transaction Failed!");
                         }
@@ -169,7 +253,8 @@ public class AccountService {
                 command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("yes")) {
-                    if (account.getBalance() > amount) {
+                    // Solution: Changed > to >= to allow purchases when balance equals amount
+                    if (account.getBalance() >= amount) {
                         double newBalance = account.getBalance() - amount;
                         boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
@@ -177,7 +262,8 @@ public class AccountService {
                             System.out.println("Transaction Successful!");
                             account.setBalance(newBalance);
                             System.out.println("Purchase successful. New balance: $" + account.getBalance());
-                            account.stringifyAccount();
+                            // Solution: Fixed - now actually prints the account information
+                            System.out.println(account.stringifyAccount());
                         } else {
                             System.out.println("Transaction Failed!");
                         }
@@ -236,7 +322,8 @@ public class AccountService {
                 command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("yes")) {
-                    if (account.getBalance() > amount) {
+                    // Solution: Changed > to >= to allow purchases when balance equals amount
+                    if (account.getBalance() >= amount) {
                         double newBalance = account.getBalance() - amount;
                         boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
@@ -244,7 +331,8 @@ public class AccountService {
                             System.out.println("Transaction Successful!");
                             account.setBalance(newBalance);
                             System.out.println("Purchase successful. New balance: $" + account.getBalance());
-                            account.stringifyAccount();
+                            // Solution: Fixed - now actually prints the account information
+                            System.out.println(account.stringifyAccount());
                         } else {
                             System.out.println("Transaction Failed!");
                         }
@@ -263,13 +351,14 @@ public class AccountService {
                 System.out.print("Select one: ");
                 choice = scanner.nextLine();
 
-                if (choice.equalsIgnoreCase("1") || choice.equalsIgnoreCase("50mb")) {
+                // Solution: Fixed incorrect choice comparisons - was comparing against wrong values
+                if (choice.equalsIgnoreCase("1") || choice.equalsIgnoreCase("1gb")) {
                     dataPlan = "1GB";
                     amount = 500;
-                } else if (choice.equalsIgnoreCase("2") || choice.equalsIgnoreCase("100mb")) {
-                    dataPlan = "1.5GB";
+                } else if (choice.equalsIgnoreCase("2") || choice.equalsIgnoreCase("2.5gb")) {
+                    dataPlan = "2.5GB";
                     amount = 1000;
-                } else if (choice.equalsIgnoreCase("3") || choice.equalsIgnoreCase("200mb")) {
+                } else if (choice.equalsIgnoreCase("3") || choice.equalsIgnoreCase("4gb")) {
                     dataPlan = "4GB";
                     amount = 2000;
                 } else {
@@ -284,7 +373,8 @@ public class AccountService {
                 command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("yes")) {
-                    if (account.getBalance() > amount) {
+                    // Solution: Changed > to >= to allow purchases when balance equals amount
+                    if (account.getBalance() >= amount) {
                         double newBalance = account.getBalance() - amount;
                         boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
@@ -292,7 +382,8 @@ public class AccountService {
                             System.out.println("Transaction Successful!");
                             account.setBalance(newBalance);
                             System.out.println("Purchase successful. New balance: $" + account.getBalance());
-                            account.stringifyAccount();
+                            // Solution: Fixed - now actually prints the account information
+                            System.out.println(account.stringifyAccount());
                         } else {
                             System.out.println("Transaction Failed!");
                         }
@@ -311,13 +402,14 @@ public class AccountService {
                 System.out.print("Select one: ");
                 choice = scanner.nextLine();
 
-                if (choice.equalsIgnoreCase("1") || choice.equalsIgnoreCase("50mb")) {
+                // Solution: Fixed incorrect choice comparisons - was comparing against wrong values
+                if (choice.equalsIgnoreCase("1") || choice.equalsIgnoreCase("2gb")) {
                     dataPlan = "2GB";
                     amount = 1000;
-                } else if (choice.equalsIgnoreCase("2") || choice.equalsIgnoreCase("100mb")) {
+                } else if (choice.equalsIgnoreCase("2") || choice.equalsIgnoreCase("4.5gb")) {
                     dataPlan = "4.5GB";
                     amount = 2000;
-                } else if (choice.equalsIgnoreCase("3") || choice.equalsIgnoreCase("200mb")) {
+                } else if (choice.equalsIgnoreCase("3") || choice.equalsIgnoreCase("10gb")) {
                     dataPlan = "10GB";
                     amount = 5000;
                 } else {
@@ -332,7 +424,8 @@ public class AccountService {
                 command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("yes")) {
-                    if (account.getBalance() > amount) {
+                    // Solution: Changed > to >= to allow purchases when balance equals amount
+                    if (account.getBalance() >= amount) {
                         double newBalance = account.getBalance() - amount;
                         boolean isTransactionSuccessful = AccountDAO.changeBalance(account.getId(), account.getAccountType(), newBalance);
 
@@ -340,7 +433,8 @@ public class AccountService {
                             System.out.println("Transaction Successful!");
                             account.setBalance(newBalance);
                             System.out.println("Purchase successful. New balance: $" + account.getBalance());
-                            account.stringifyAccount();
+                            // Solution: Fixed - now actually prints the account information
+                            System.out.println(account.stringifyAccount());
                         } else {
                             System.out.println("Transaction Failed!");
                         }
