@@ -7,6 +7,7 @@ Before you run the application, make you have two tables named 'customers' and '
 #### For Customers
 
 ```sql
+-- MySQL
 CREATE TABLE customers (
     id NOT NULL AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(255) NOT NULL,
@@ -15,11 +16,22 @@ CREATE TABLE customers (
     phone VARCHAR(20) NOT NULL,
     email VARCHAR(100) NOT NULL
 )
+
+-- PostgreSQL
+CREATE TABLE customers (
+	id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	firstName VARCHAR(255) NOT NULL,
+	lastName VARCHAR(255) NOT NULL,
+	pin INTEGER NOT NULL,
+	phone VARCHAR NOT NULL,
+	email VARCHAR(255) NOT NULL
+)
 ```
 
 #### For Accounts
 
 ```sql
+-- MySQL
 CREATE TABLE accounts (
     id NOT NULL AUTO_INCREMENT PRIMARY KEY,
     customerId INT NOT NULL,
@@ -28,6 +40,17 @@ CREATE TABLE accounts (
 
     FOREIGN KEY (customerID)
     REFERENCES customers(id)
+)
+
+-- PostgreSQL
+CREATE TYPE AccountType AS ENUM('SAVINGS', 'CURRENT')
+
+CREATE TABLE accounts (
+	id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	customerId INTEGER NOT NULL REFERENCES customers(id),
+	accountType AccountType NOT NULL,
+	balance DECIMAL(17,2) NOT NULL
+	
 )
 ```
 
